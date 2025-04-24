@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BLACK OFFICE - Painel Administrativo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+
+<body>
+    <div class="admin-dashboard">
+        <div class="admin-sidebar">
+            <div class="sidebar-header">
+                <img src="../images/Logo Black Office.png" alt="BLACK OFFICE" class="sidebar-logo">
+                <h3>Painel Administrativo</h3>
+            </div>
+            <div class="sidebar-nav">
+                <a href="#" class="nav-item active">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+                <a href="#" class="nav-item">
+                    <i class="fas fa-calendar-check"></i> Consultas
+                </a>
+                <a href="#" class="nav-item">
+                    <i class="fas fa-cog"></i> Configurações
+                </a>
+            </div>
+            <div class="sidebar-footer">
+                <button id="logoutBtn" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </button>
+            </div>
+        </div>
+
+        <div class="admin-content">
+            <div class="content-header">
+                <div class="content-title">
+                    <h1>Dashboard</h1>
+                    <p>Gerencie as consultas dos clientes</p>
+                </div>
+                <div class="content-actions">
+                    <button id="refreshBtn" class="btn-primary">
+                        <i class="fas fa-sync-alt"></i> Atualizar
+                    </button>
+                    <button id="exportBtn" class="btn-secondary">
+                        <i class="fas fa-file-export"></i> Exportar
+                    </button>
+                </div>
+            </div>
+
+            <div class="admin-card">
+                <div class="card-header">
+                    <div class="card-title">Consultas Recentes</div>
+                    <div class="filter-container">
+                        <label for="statusFilter">Filtrar por status:</label>
+                        <select id="statusFilter">
+                            <option value="all">Todos</option>
+                            <option value="new">Novos</option>
+                            <option value="in-progress">Em andamento</option>
+                            <option value="completed">Concluídos</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <table class="consultas-table">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Nome</th>
+                                <th>Email</th>
+                                <th>Serviço</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="consultasTableBody">
+                            <!-- Conteúdo será preenchido dinamicamente -->
+                            <tr>
+                                <td colspan="6" class="loading-message">
+                                    <i class="fas fa-spinner fa-spin"></i> Carregando consultas...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer">
+                    <div class="pagination-container">
+                        <button id="prevPage" class="btn-secondary" disabled>
+                            <i class="fas fa-chevron-left"></i> Anterior
+                        </button>
+                        <span id="paginationInfo">Página 1 de 1</span>
+                        <button id="nextPage" class="btn-secondary" disabled>
+                            Próxima <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Detalhes da Consulta -->
+    <div id="consultaModal" class="modal-backdrop">
+        <div class="modal-container">
+            <div class="modal-header">
+                <div class="modal-title">Detalhes da Consulta</div>
+                <button id="closeModal" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="consultaDetail" class="consulta-detail">
+                    <!-- Conteúdo será preenchido dinamicamente -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="closeModalBtn" class="btn-secondary">Cancelar</button>
+                <button id="updateStatusBtn" class="btn-primary">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Incluir o arquivo de integração com o banco de dados -->
+    <script src="js/api-integration.js"></script>
+
+    <script>
+        // Script de dashboard para gerenciar consultas
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Verificar autenticação
+            checkAuth();
+
+            // Elementos do DOM
+            const logoutBtn = document.getElementById('logoutBtn');
+            const refreshBtn = document.getElementById('refreshBtn');
+            const exportBtn = document.getElementById('exportBtn');
+            const statusFilter = document.getElementById('statusFilter');
+            const consultasTableBody = document.getElementById('consultasTableBody');
+            const prevPageBtn = document.getElementById('prevPage');
+            const nextPageBtn = document.getElementById('nextPage');
+            const paginationInfo = document.getElementById('paginationInfo');
+            const consultaModal = document.getElementById('consultaModal');
+            const closeModal = document.getElementById('closeModal');
+            const closeModalBtn = document.getElementById('closeModalBtn');
+            const updateStatusBtn = document.getElementById('updateStatusBtn');
+            const consultaDetail = document.getElementById('consultaDetail');
+
+            // Variáveis de estado
+            let currentPage = 1;
+            let currentFilter = 'all';
+            let currentConsulta = null;
+            let totalPages = 1;
+            let allConsultas = [];
+
+            // Event Listeners
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', logout);
+            }
+
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', loadConsultas);
+            }
+
+            if (exportBtn) {
+                exportBtn.addEventListener('click', exportConsultas);
+            }
+
+            if (statusFilter) {
+                statusFilter.addEventListener('change', function () {
+                    currentFilter = this.value;
+                    currentPage = 1;
+                    filterAndDisplayConsultas();
+                });
+            }
+
+            if (prevPageBtn) {
+                prevPageBtn.addEventListener('click', function () {
+                    if (currentPage > 1) {
+                        currentPage--;
+                        filterAndDisplayConsultas();
+                    }
+                });
+            }
+
+            if (nextPageBtn) {
+                nextPageBtn.addEventListener('click', function () {
+                    if (currentPage < totalPages) {
+                        currentPage++;
+                        filterAndDisplayConsultas();
+                    }
+                });
+            }
+
+            if (closeModal) {
+                closeModal.addEventListener('click', function () {
+                    consultaModal.classList.remove('show');
+                });
+            }
+
+            if (closeModalBtn) {
+                closeModalBtn.addEventListener('click', function () {
+                    consultaModal.classList.remove('show');
+                });
+            }
+
+            async function updateConsultaStatus() {
+                if (!currentConsulta) {
+                    return;
+                }
+
+                console.log('Atualizando status da consulta:', currentConsulta.id);
+
+                // Obter valores atualizados
+                const newStatus = document.getElementById('statusSelect').value;
+                const newNotes = document.getElementById('notesTextarea').value;
+
+                // Criar objeto de atualização
+                const updates = {
+                    status: newStatus,
+                    notes: newNotes,
+                    updated_at: new Date().toISOString()
+                };
+
+                console.log('Atualizações:', updates);
+
+                try {
+                    // Tentar atualizar no banco de dados primeiro
+                    if (await checkDatabaseConnection()) {
+                        console.log('Atualizando no banco de dados...');
+                        const result = await updateConsultaInDatabase(currentConsulta.id, updates);
+
+                        if (result) {
+                            console.log('Atualização bem-sucedida no banco de dados');
+                            // Atualização bem-sucedida no banco de dados
+                            alert('Consulta atualizada com sucesso!');
+                            consultaModal.classList.remove('show');
+                            loadConsultas(); // Recarregar consultas
+                            return;
+                        }
+                    }
+
+                    // Fallback para localStorage se o banco de dados falhar
+                    console.log('Usando localStorage como fallback para atualização...');
+                    updateConsultaInLocalStorage(currentConsulta.id, updates);
+
+                } catch (error) {
+                    console.error('Erro ao atualizar consulta:', error);
+                    // Fallback para localStorage
+                    updateConsultaInLocalStorage(currentConsulta.id, updates);
+                }
+            }
+
+            // Carregar consultas iniciais
+            loadConsultas();
+
+            // Funções
+            function checkAuth() {
+                const auth = JSON.parse(localStorage.getItem('auth') || '{"authenticated":false}');
+
+                // Verificar se a autenticação expirou
+                if (auth.authenticated && auth.expires) {
+                    if (new Date().getTime() > auth.expires) {
+                        // Autenticação expirada
+                        localStorage.removeItem('auth');
+                        window.location.href = 'login.html';
+                        return;
+                    }
+
+                    // Autenticação válida, continuar
+                    return;
+                }
+
+                // Não autenticado - redirecionar para login
+                window.location.href = 'login.html';
+            }
+
+            function logout() {
+                // Limpar autenticação local
+                localStorage.removeItem('auth');
+
+                // Redirecionar para login
+                window.location.href = 'login.html';
+            }
+
+            async function loadConsultas() {
+
+                // Mostrar mensagem de carregamento
+
+                consultasTableBody.innerHTML = '<tr><td colspan="6" class="loading-message"><i class="fas fa-spinner fa-spin"></i> Carregando consultas...</td></tr>';
+
+                try {
+                    const { consultas, pagination } = await fetchConsultas(currentPage, currentFilter);
+                    console.log('Iniciando carregamento de consultas...');
+
+                    // Verificar conexão com o banco de dados
+                    const isConnected = await checkDatabaseConnection();
+                    console.log('Status da conexão com o banco de dados:', isConnected ? 'Conectado' : 'Desconectado');
+
+                    if (isConnected) {
+                        // Buscar dados do banco de dados PostgreSQL
+                        console.log('Buscando consultas do banco de dados...');
+                        const dbConsultas = await fetchConsultasFromDatabase();
+
+                        if (dbConsultas && dbConsultas.length > 0) {
+                            console.log(`${dbConsultas.length} consultas encontradas no banco de dados`);
+
+                            // Mapear os dados para o formato esperado pelo frontend
+                            allConsultas = dbConsultas.map(consulta => {
+                                // Verificar e normalizar os campos
+                                return {
+                                    id: consulta.id || consulta.ID || '',
+                                    name: consulta.name || consulta.nome || '',
+                                    email: consulta.email || '',
+                                    phone: consulta.phone || consulta.telefone || '',
+                                    service: consulta.service || consulta.servico || '',
+                                    specifications: consulta.specifications || consulta.especificacoes || consulta.mensagem || '',
+                                    status: consulta.status || 'new',
+                                    notes: consulta.notes || consulta.notas || '',
+                                    created_at: consulta.created_at || consulta.createdAt || consulta.data || new Date().toISOString(),
+                                    updated_at: consulta.updated_at || consulta.updatedAt || consulta.data_atualizacao || new Date().toISOString()
+                                };
+                            });
+
+                            // Filtrar e exibir consultas
+                            filterAndDisplayConsultas();
+                            return;
+                        } else {
+                            console.log('Nenhuma consulta encontrada no banco de dados ou erro ao buscar');
+                        }
+                    }
+
+                    // Se não conseguir dados do banco ou não estiver conectado, usar localStorage
+                    console.log('Usando localStorage como fallback...');
+                    loadConsultasFromLocalStorage();
+                } catch (error) {
+                    console.error('Erro ao carregar consultas:', error);
+                    // Fallback para localStorage em caso de erro
+                    loadConsultasFromLocalStorage();
+                }
+            }
+
+            function loadConsultasFromLocalStorage() {
+                // Carregar consultas do localStorage
+                let consultas = JSON.parse(localStorage.getItem('consultas') || '[]');
+                console.log(`${consultas.length} consultas encontradas no localStorage`);
+
+                // Se não houver consultas, criar algumas de exemplo
+                if (consultas.length === 0) {
+                    console.log('Criando consultas de exemplo...');
+                    consultas = createSampleConsultas();
+                    localStorage.setItem('consultas', JSON.stringify(consultas));
+                }
+
+                // Armazenar todas as consultas
+                allConsultas = consultas;
+
+                // Filtrar e exibir
+                filterAndDisplayConsultas();
+            }
+
+            function filterAndDisplayConsultas() {
+                console.log('Filtrando e exibindo consultas...');
+                console.log('Total de consultas:', allConsultas.length);
+                console.log('Filtro atual:', currentFilter);
+
+                // Filtrar por status se necessário
+                let filteredConsultas = allConsultas;
+
+                if (currentFilter !== 'all') {
+                    filteredConsultas = allConsultas.filter(consulta => consulta.status === currentFilter);
+                    console.log(`${filteredConsultas.length} consultas após filtro de status`);
+                }
+
+                // Ordenar por data (mais recente primeiro)
+                filteredConsultas.sort((a, b) => {
+                    const dateA = new Date(a.created_at || a.createdAt);
+                    const dateB = new Date(b.created_at || b.createdAt);
+                    return dateB - dateA;
+                });
+
+                // Paginação simples
+                const pageSize = 10;
+                const start = (currentPage - 1) * pageSize;
+                const end = start + pageSize;
+                const paginatedConsultas = filteredConsultas.slice(start, end);
+
+                // Calcular total de páginas
+                totalPages = Math.ceil(filteredConsultas.length / pageSize) || 1;
+                console.log(`Página ${currentPage} de ${totalPages}`);
+
+                // Atualizar informações de paginação
+                paginationInfo.textContent = `Página ${currentPage} de ${totalPages}`;
+
+                // Habilitar/desabilitar botões de paginação
+                prevPageBtn.disabled = currentPage <= 1;
+                nextPageBtn.disabled = currentPage >= totalPages;
+
+                // Verificar se há consultas para exibir
+                if (paginatedConsultas.length === 0) {
+                    consultasTableBody.innerHTML = '<tr><td colspan="6" class="empty-message">Nenhuma consulta encontrada.</td></tr>';
+                    return;
+                }
+
+                // Renderizar consultas
+                renderConsultas(paginatedConsultas);
+            }
+
+            function createSampleConsultas() {
+                // Criar consultas de exemplo para demonstração
+                const services = [
+                    'Gestão de Tráfego',
+                    'Design Gráfico',
+                    'CopyWriting',
+                    'Edição de Vídeo',
+                    'Programação Web',
+                    'Social Mídia',
+                    'Lançamentos de Alta Performance'
+                ];
+
+                const statuses = ['new', 'in-progress', 'completed'];
+
+                const sampleConsultas = [];
+
+                // Gerar 15 consultas de exemplo
+                for (let i = 1; i <= 15; i++) {
+                    const date = new Date();
+                    date.setDate(date.getDate() - Math.floor(Math.random() * 30)); // Data aleatória nos últimos 30 dias
+
+                    sampleConsultas.push({
+                        id: 'sample-' + i,
+                        name: `Cliente Exemplo ${i}`,
+                        email: `cliente${i}@exemplo.com`,
+                        phone: `(${Math.floor(Math.random() * 90) + 10}) ${Math.floor(Math.random() * 90000) + 10000}-${Math.floor(Math.random() * 9000) + 1000}`,
+                        service: services[Math.floor(Math.random() * services.length)],
+                        specifications: `Esta é uma solicitação de exemplo para demonstração do sistema. O cliente está interessado em serviços de ${services[Math.floor(Math.random() * services.length)]} para sua empresa.`,
+                        status: statuses[Math.floor(Math.random() * statuses.length)],
+                        notes: i % 3 === 0 ? 'Estas são notas de exemplo para esta consulta.' : '',
+                        created_at: date.toISOString(),
+                        updated_at: date.toISOString()
+                    });
+                }
+
+                return sampleConsultas;
+            }
+
+
+
+
+            function renderConsultas(consultas) {
+                console.log(`Renderizando ${consultas.length} consultas na tabela`);
+
+                // Limpar tabela
+                consultasTableBody.innerHTML = '';
+
+                // Renderizar cada consulta
+                consultas.forEach(consulta => {
+                    const row = document.createElement('tr');
+
+                    // Formatar data
+                    let dateStr = consulta.created_at || consulta.createdAt || new Date().toISOString();
+                    const date = new Date(dateStr);
+                    const formattedDate = `${date.toLocaleDateString('pt-BR')} ${date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+
+                    // Criar células
+                    row.innerHTML = `
+            <td>${formattedDate}</td>
+            <td>${consulta.name || ''}</td>
+            <td>${consulta.email || ''}</td>
+            <td>${consulta.service || ''}</td>
+            <td>
+              <span class="status-badge status-${consulta.status || 'new'}">
+                ${getStatusLabel(consulta.status || 'new')}
+              </span>
+            </td>
+            <td>
+              <button class="action-btn view" data-id="${consulta.id}" title="Ver detalhes">
+                <i class="fas fa-eye"></i>
+              </button>
+              <button class="action-btn delete" data-id="${consulta.id}" title="Excluir">
+                <i class="fas fa-trash"></i>
+              </button>
+            </td>
+          `;
+
+                    // Adicionar à tabela
+                    consultasTableBody.appendChild(row);
+
+                    // Adicionar event listeners para os botões
+                    const viewBtn = row.querySelector('.view');
+                    const deleteBtn = row.querySelector('.delete');
+
+                    viewBtn.addEventListener('click', function () {
+                        const id = this.getAttribute('data-id');
+                        openConsultaDetail(id);
+                    });
+
+                    deleteBtn.addEventListener('click', function () {
+                        const id = this.getAttribute('data-id');
+                        deleteConsulta(id);
+                    });
+                });
+            }
+
+            function getStatusLabel(status) {
+                switch (status) {
+                    case 'new':
+                        return 'Novo';
+                    case 'in-progress':
+                        return 'Em andamento';
+                    case 'completed':
+                        return 'Concluído';
+                    default:
+                        return 'Desconhecido';
+                }
+            }
+
+            async function openConsultaDetail(id) {
+                console.log(`Abrindo detalhes da consulta ${id}`);
+
+                // Buscar consulta por ID
+                let consulta = null;
+
+                try {
+                    // Tentar buscar do banco de dados primeiro
+                    if (await checkDatabaseConnection()) {
+                        console.log('Buscando consulta do banco de dados...');
+                        consulta = await fetchConsultaById(id);
+                    }
+                } catch (error) {
+                    console.error('Erro ao buscar consulta do banco de dados:', error);
+                }
+
+                // Se não encontrou no banco de dados, buscar do localStorage
+                if (!consulta) {
+                    console.log('Buscando consulta do localStorage...');
+                    const consultas = JSON.parse(localStorage.getItem('consultas') || '[]');
+                    consulta = consultas.find(c => c.id === id);
+                }
+
+                // Se ainda não encontrou, mostrar erro
+                if (!consulta) {
+                    alert('Consulta não encontrada.');
+                    return;
+                }
+
+                console.log('Consulta encontrada:', consulta);
+
+                // Armazenar consulta atual
+                currentConsulta = consulta;
+
+                // Preencher detalhes
+                consultaDetail.innerHTML = `
+          <div class="detail-section">
+            <h3>Informações do Cliente</h3>
+            <div class="detail-row">
+              <div class="detail-label">Nome:</div>
+              <div class="detail-value">${consulta.name || ''}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Email:</div>
+              <div class="detail-value">${consulta.email || ''}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Telefone:</div>
+              <div class="detail-value">${consulta.phone || 'Não informado'}</div>
+            </div>
+          </div>
+          
+          <div class="detail-section">
+            <h3>Detalhes da Consulta</h3>
+            <div class="detail-row">
+              <div class="detail-label">Serviço:</div>
+              <div class="detail-value">${consulta.service || ''}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Data:</div>
+              <div class="detail-value">${new Date(consulta.created_at || consulta.createdAt || new Date()).toLocaleString('pt-BR')}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Status:</div>
+              <div class="detail-value">
+                <select id="statusSelect" class="status-select">
+                  <option value="new" ${(consulta.status || 'new') === 'new' ? 'selected' : ''}>Novo</option>
+                  <option value="in-progress" ${(consulta.status || 'new') === 'in-progress' ? 'selected' : ''}>Em andamento</option>
+                  <option value="completed" ${(consulta.status || 'new') === 'completed' ? 'selected' : ''}>Concluído</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <div class="detail-section">
+            <h3>Especificações</h3>
+            <div class="detail-text">${consulta.specifications || consulta.especificacoes || consulta.mensagem || 'Nenhuma especificação fornecida.'}</div>
+          </div>
+          
+          <div class="detail-section">
+            <h3>Notas Internas</h3>
+            <textarea id="notesTextarea" class="notes-textarea" placeholder="Adicione notas internas aqui...">${consulta.notes || consulta.notas || ''}</textarea>
+          </div>
+        `;
+
+                // Mostrar modal
+                consultaModal.classList.add('show');
+            }
+
+            async function updateConsultaStatus() {
+                if (!currentConsulta) {
+                    return;
+                }
+
+                console.log('Atualizando status da consulta:', currentConsulta.id);
+
+                // Obter valores atualizados
+                const newStatus = document.getElementById('statusSelect').value;
+                const newNotes = document.getElementById('notesTextarea').value;
+
+                // Criar objeto de atualização
+                const updates = {
+                    status: newStatus,
+                    notes: newNotes,
+                    updated_at: new Date().toISOString()
+                };
+
+                console.log('Atualizações:', updates);
+
+                try {
+                    // Tentar atualizar no banco de dados primeiro
+                    if (await checkDatabaseConnection()) {
+                        console.log('Atualizando no banco de dados...');
+                        const result = await updateConsultaInDatabase(currentConsulta.id, updates);
+
+                        if (result) {
+                            console.log('Atualização bem-sucedida no banco de dados');
+                            // Atualização bem-sucedida no banco de dados
+                            alert('Consulta atualizada com sucesso!');
+                            consultaModal.classList.remove('show');
+                            loadConsultas(); // Recarregar consultas
+                            return;
+                        }
+                    }
+
+                    // Fallback para localStorage se o banco de dados falhar
+                    console.log('Usando localStorage como fallback para atualização...');
+                    updateConsultaInLocalStorage(currentConsulta.id, updates);
+
+                } catch (error) {
+                    console.error('Erro ao atualizar consulta:', error);
+                    // Fallback para localStorage
+                    updateConsultaInLocalStorage(currentConsulta.id, updates);
+                }
+            }
+
+            function updateConsultaInLocalStorage(id, updates) {
+                // Obter consultas do localStorage
+                const consultas = JSON.parse(localStorage.getItem('consultas') || '[]');
+
+                // Encontrar e atualizar a consulta
+                const index = consultas.findIndex(c => c.id === id);
+
+                if (index !== -1) {
+                    // Atualizar consulta
+                    consultas[index] = { ...consultas[index], ...updates };
+
+                    // Salvar no localStorage
+                    localStorage.setItem('consultas', JSON.stringify(consultas));
+
+                    // Atualizar consultas exibidas
+                    allConsultas = consultas;
+
+                    // Fechar modal e recarregar
+                    alert('Consulta atualizada com sucesso!');
+                    consultaModal.classList.remove('show');
+                    filterAndDisplayConsultas();
+                }
+            }
+
+            async function deleteConsulta(id) {
+                if (!confirm('Tem certeza que deseja excluir esta consulta?')) {
+                    return;
+                }
+
+                console.log(`Excluindo consulta ${id}`);
+
+                try {
+                    // Tentar excluir do banco de dados primeiro
+                    if (await checkDatabaseConnection()) {
+                        console.log('Excluindo do banco de dados...');
+                        const result = await deleteConsultaFromDatabase(id);
+
+                        if (result) {
+                            console.log('Exclusão bem-sucedida no banco de dados');
+                            // Exclusão bem-sucedida no banco de dados
+                            alert('Consulta excluída com sucesso!');
+                            loadConsultas(); // Recarregar consultas
+                            return;
+                        }
+                    }
+
+                    // Fallback para localStorage se o banco de dados falhar
+                    console.log('Usando localStorage como fallback para exclusão...');
+                    deleteConsultaFromLocalStorage(id);
+
+                } catch (error) {
+                    console.error('Erro ao excluir consulta:', error);
+                    // Fallback para localStorage
+                    deleteConsultaFromLocalStorage(id);
+                }
+            }
+
+            function deleteConsultaFromLocalStorage(id) {
+                // Obter consultas do localStorage
+                const consultas = JSON.parse(localStorage.getItem('consultas') || '[]');
+
+                // Filtrar a consulta a ser excluída
+                const updatedConsultas = consultas.filter(c => c.id !== id);
+
+                // Salvar no localStorage
+                localStorage.setItem('consultas', JSON.stringify(updatedConsultas));
+
+                // Atualizar consultas exibidas
+                allConsultas = updatedConsultas;
+
+                // Recarregar
+                alert('Consulta excluída com sucesso!');
+                filterAndDisplayConsultas();
+            }
+
+            function exportConsultas() {
+                console.log('Exportando consultas...');
+
+                // Filtrar consultas conforme o filtro atual
+                let consultas = allConsultas;
+
+                if (currentFilter !== 'all') {
+                    consultas = allConsultas.filter(consulta => consulta.status === currentFilter);
+                }
+
+                // Se não houver consultas, mostrar mensagem
+                if (consultas.length === 0) {
+                    alert('Não há consultas para exportar.');
+                    return;
+                }
+
+                console.log(`Exportando ${consultas.length} consultas`);
+
+                // Criar CSV
+                let csv = 'Data,Nome,Email,Telefone,Serviço,Status,Especificações,Notas\n';
+
+                consultas.forEach(consulta => {
+                    // Formatar data
+                    const date = new Date(consulta.created_at || consulta.createdAt || new Date());
+                    const formattedDate = `${date.toLocaleDateString('pt-BR')} ${date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+
+                    // Formatar status
+                    const status = getStatusLabel(consulta.status || 'new');
+
+                    // Escapar campos de texto para CSV
+                    const escapeCsv = (text) => {
+                        if (!text) return '';
+                        return `"${String(text).replace(/"/g, '""')}"`;
+                    };
+
+                    // Adicionar linha
+                    csv += `${formattedDate},${escapeCsv(consulta.name)},${escapeCsv(consulta.email)},${escapeCsv(consulta.phone)},${escapeCsv(consulta.service)},${status},${escapeCsv(consulta.specifications || consulta.especificacoes || consulta.mensagem)},${escapeCsv(consulta.notes || consulta.notas)}\n`;
+                });
+
+                // Criar blob e link para download
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+
+                // Configurar link
+                link.setAttribute('href', url);
+                link.setAttribute('download', `consultas_black_office_${new Date().toISOString().split('T')[0]}.csv`);
+                link.style.visibility = 'hidden';
+
+                // Adicionar ao DOM, clicar e remover
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                console.log('Exportação concluída');
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,138 @@
+/* Estilos adicionais para a seção de serviços */
+.service-details {
+    padding: 50px 0;
+    background: var(--primary-color);
+}
+
+.service-details-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 50px;
+    align-items: center;
+}
+
+.service-details-image {
+    position: relative;
+    overflow: hidden;
+    border-radius: 10px;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+}
+
+.service-details-image img {
+    width: 100%;
+    height: auto;
+    transition: transform 0.5s ease;
+}
+
+.service-details-image:hover img {
+    transform: scale(1.05);
+}
+
+.service-details-content h3 {
+    font-size: 2rem;
+    margin-bottom: 20px;
+    color: var(--accent-color);
+}
+
+.service-details-content p {
+    margin-bottom: 20px;
+    color: var(--text-color-muted);
+}
+
+.service-features {
+    margin-top: 30px;
+}
+
+.feature-item {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 15px;
+}
+
+.feature-icon {
+    color: var(--accent-color);
+    font-size: 1.2rem;
+    margin-right: 15px;
+    margin-top: 3px;
+}
+
+.feature-text h4 {
+    font-size: 1.1rem;
+    margin-bottom: 5px;
+}
+
+.feature-text p {
+    font-size: 0.9rem;
+    color: var(--text-color-muted);
+}
+
+.service-cta {
+    margin-top: 30px;
+}
+
+/* Estilos para o portfólio expandido */
+.portfolio-expanded {
+    margin-top: 50px;
+}
+
+.portfolio-expanded-item {
+    background: rgba(18, 18, 18, 0.5);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 30px;
+}
+
+.portfolio-expanded-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+.portfolio-expanded-image {
+    height: 300px;
+    background-size: cover;
+    background-position: center;
+}
+
+.portfolio-expanded-info {
+    padding: 30px;
+}
+
+.portfolio-expanded-info h3 {
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+    color: var(--accent-color);
+}
+
+.portfolio-expanded-info p {
+    margin-bottom: 20px;
+    color: var(--text-color-muted);
+}
+
+.portfolio-expanded-meta {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.portfolio-expanded-meta span {
+    font-size: 0.9rem;
+    color: var(--text-color-muted);
+}
+
+/* Responsividade para as novas seções */
+@media screen and (max-width: 992px) {
+    .service-details-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .portfolio-expanded-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .portfolio-expanded-image {
+        height: 200px;
+    }
+}

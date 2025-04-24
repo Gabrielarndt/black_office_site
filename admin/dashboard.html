@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BLACK OFFICE - Painel Administrativo</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="css/admin.css">
+
+</head>
+
+<body>
+  <div class="admin-dashboard">
+    <div class="admin-sidebar">
+      <div class="sidebar-header">
+        <img src="../images/Logo Black Office.png" alt="BLACK OFFICE" class="sidebar-logo">
+        <h3>Painel Administrativo</h3>
+      </div>
+      <div class="sidebar-nav">
+        <a href="#" class="nav-item active">
+          <i class="fas fa-tachometer-alt"></i> Dashboard
+        </a>
+        <a href="#" class="nav-item">
+          <i class="fas fa-calendar-check"></i> Consultas
+        </a>
+        <a href="#" class="nav-item">
+          <i class="fas fa-cog"></i> Configurações
+        </a>
+      </div>
+      <div class="sidebar-footer">
+        <button id="logoutBtn" class="logout-btn">
+          <i class="fas fa-sign-out-alt"></i> Sair
+        </button>
+      </div>
+    </div>
+
+    <div class="admin-content">
+      <div class="content-header">
+        <div class="content-title">
+          <h1>Dashboard</h1>
+          <p>Gerencie as consultas dos clientes</p>
+        </div>
+        <div class="content-actions">
+          <button id="refreshBtn" class="btn-primary">
+            <i class="fas fa-sync-alt"></i> Atualizar
+          </button>
+          <button id="exportBtn" class="btn-secondary">
+            <i class="fas fa-file-export"></i> Exportar
+          </button>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <div class="card-header">
+          <div class="card-title">Consultas Recentes</div>
+          <div class="filter-container">
+            <label for="statusFilter">Filtrar por status:</label>
+            <select id="statusFilter">
+              <option value="all">Todos</option>
+              <option value="new">Novos</option>
+              <option value="in-progress">Em andamento</option>
+              <option value="completed">Concluídos</option>
+            </select>
+          </div>
+        </div>
+        <div class="card-body">
+          <table class="consultas-table">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Nome</th>
+                <th>Email</th>
+                <th>Serviço</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="consultasTableBody">
+              <!-- Conteúdo será preenchido dinamicamente -->
+              <tr>
+                <td colspan="6" class="loading-message">
+                  <i class="fas fa-spinner fa-spin"></i> Carregando consultas...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card-footer">
+          <div class="pagination-container">
+            <button id="prevPage" class="btn-secondary" disabled>
+              <i class="fas fa-chevron-left"></i> Anterior
+            </button>
+            <span id="paginationInfo">Página 1 de 1</span>
+            <button id="nextPage" class="btn-secondary" disabled>
+              Próxima <i class="fas fa-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Detalhes da Consulta -->
+  <div id="consultaModal" class="modal-backdrop">
+    <div class="modal-container">
+      <div class="modal-header">
+        <div class="modal-title">Detalhes da Consulta</div>
+        <button id="closeModal" class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="consultaDetail" class="consulta-detail">
+          <!-- Conteúdo será preenchido dinamicamente -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="closeModalBtn" class="btn-secondary">Cancelar</button>
+        <button id="updateStatusBtn" class="btn-primary">Salvar Alterações</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Incluir o arquivo de integração com o banco de dados -->
+  <script src="js/api-integration.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Variáveis de estado globais
+      let currentPage = 1;
+      let totalPages = 1;
+      const consultasTableBody = document.getElementById('consultasTableBody');
+      const statusFilter = document.getElementById('statusFilter');
+      const paginationInfo = document.getElementById('paginationInfo');
+    
+      // Carregar consultas do banco de dados
+      async function loadConsultas() {
+        try {
+          consultasTableBody.innerHTML = `
+            <tr>
+              <td colspan="6" class="loading-message">
+                <i class="fas fa-spinner fa-spin"></i> Carregando...
+              </td>
+            </tr>
+          `;
+    
+          // Chamar a API para buscar consultas
+          const { consultas, pagination } = await fetchConsultas(currentPage, statusFilter.value);
+    
+          // Renderizar consultas
+          consultasTableBody.innerHTML = '';
+          consultas.forEach(consulta => {
+            const row = document.createElement('tr');
+            const formattedDate = new Date(consulta.createdAt).toLocaleString('pt-BR');
+    
+            row.innerHTML = `
+              <td>${formattedDate}</td>
+              <td>${consulta.name}</td>
+              <td>${consulta.email}</td>
+              <td>${consulta.service}</td>
+              <td>
+                <span class="status-badge status-${consulta.status}">
+                  ${getStatusLabel(consulta.status)}
+                </span>
+              </td>
+              <td>
+                <button class="action-btn view" data-id="${consulta.id}">
+                  <i class="fas fa-eye"></i>
+                </button>
+                <button class="action-btn delete" data-id="${consulta.id}">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            `;
+    
+            consultasTableBody.appendChild(row);
+          });
+    
+          // Atualizar paginação
+          totalPages = pagination.totalPages;
+          paginationInfo.textContent = `Página ${currentPage} de ${totalPages}`;
+          document.getElementById('prevPage').disabled = currentPage <= 1;
+          document.getElementById('nextPage').disabled = currentPage >= totalPages;
+        } catch (error) {
+          consultasTableBody.innerHTML = `
+            <tr>
+              <td colspan="6" class="error-message">
+                <i class="fas fa-exclamation-triangle"></i> 
+                ${error.message || 'Erro ao carregar consultas'}
+              </td>
+            </tr>
+          `;
+        }
+      }
+    
+      // Eventos de paginação e filtro
+      document.getElementById('prevPage').addEventListener('click', () => {
+        currentPage--;
+        loadConsultas();
+      });
+    
+      document.getElementById('nextPage').addEventListener('click', () => {
+        currentPage++;
+        loadConsultas();
+      });
+    
+      statusFilter.addEventListener('change', () => {
+        currentPage = 1;
+        loadConsultas();
+      });
+    
+      // Evento de visualização de detalhes
+      consultasTableBody.addEventListener('click', async (e) => {
+  // Verifica se o clique foi em um botão com classe "view" ou em seu ícone
+  const viewButton = e.target.closest('.view'); // Busca o ancestral com classe "view"
+  if (viewButton) {
+    const id = viewButton.dataset.id;
+    try {
+      const consulta = await getConsultaDetails(id);
+      openConsultaModal(consulta);
+    } catch (error) {
+      console.error("Erro ao buscar consulta:", error);
+      alert("Não foi possível carregar os detalhes.");
+    }
+  }
+});
+async function getConsultaDetails(id) {
+  const token = localStorage.getItem('token'); // ou sessionStorage
+  const response = await fetch(`http://localhost:3000/api/consultas/${id}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`, // <- ESSENCIAL
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Erro ao buscar detalhes: Consulta não encontrada");
+  }
+
+  return await response.json();
+}
+
+    
+      // Modal de detalhes
+      function openConsultaModal(consulta) {
+  const modal = document.getElementById('consultaModal');
+  const detailContainer = modal.querySelector('.consulta-detail');
+
+  detailContainer.innerHTML = `
+          <div class="detail-section">
+            <h3>Informações do Cliente</h3>
+            <div class="detail-row">
+              <div class="detail-label">Nome:</div>
+              <div class="detail-value">${consulta.name || ''}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Email:</div>
+              <div class="detail-value">${consulta.email || ''}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Telefone:</div>
+              <div class="detail-value">${consulta.phone || 'Não informado'}</div>
+            </div>
+          </div>
+          
+          <div class="detail-section">
+            <h3>Detalhes da Consulta</h3>
+            <div class="detail-row">
+              <div class="detail-label">Serviço:</div>
+              <div class="detail-value">${consulta.service || ''}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Data:</div>
+              <div class="detail-value">${new Date(consulta.created_at || consulta.createdAt || new Date()).toLocaleString('pt-BR')}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Status:</div>
+              <div class="detail-value">
+                <select id="statusSelect" class="status-select">
+                  <option value="new" ${(consulta.status || 'new') === 'new' ? 'selected' : ''}>Novo</option>
+                  <option value="in-progress" ${(consulta.status || 'new') === 'in-progress' ? 'selected' : ''}>Em andamento</option>
+                  <option value="completed" ${(consulta.status || 'new') === 'completed' ? 'selected' : ''}>Concluído</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <div class="detail-section">
+            <h3>Especificações</h3>
+            <div class="detail-text">${consulta.specifications || consulta.especificacoes || consulta.mensagem || 'Nenhuma especificação fornecida.'}</div>
+          </div>
+          
+          <div class="detail-section">
+            <h3>Notas Internas</h3>
+            <textarea id="notesTextarea" class="notes-textarea" placeholder="Adicione notas internas aqui...">${consulta.notes || consulta.notas || ''}</textarea>
+          </div>
+        `;
+
+  // Exibe o modal usando a classe "show" (como no código antigo)
+  modal.classList.add('show');
+
+  // Adiciona listeners após garantir que os elementos existem
+  document.getElementById('updateStatusBtn').addEventListener('click', async () => {
+  try {
+    const newStatus = document.getElementById('statusSelect').value;
+    await updateConsultaStatus(consulta.id, newStatus);
+    
+    // Recarrega a página após sucesso
+    window.location.reload();
+    
+  } catch (error) {
+    console.error("Erro ao salvar:", error);
+    window.location.reload();
+  }
+});
+
+  document.getElementById('closeModalBtn').addEventListener('click', () => {
+    modal.classList.remove('show');
+  });
+}
+    
+      // Carregar consultas inicialmente
+      loadConsultas();
+    
+      // Função para obter label do status
+      function getStatusLabel(status) {
+        switch (status) {
+          case 'new':
+            return 'Novo';
+          case 'in-progress':
+            return 'Em andamento';
+          case 'completed':
+            return 'Concluído';
+          default:
+            return 'Desconhecido';
+        }
+      }
+    });
+    
+    
+    </script>
+</body>
+
+</html>

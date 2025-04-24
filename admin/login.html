@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BLACK OFFICE - Login Administrativo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body class="admin-body">
+    <div class="admin-container">
+        <div class="login-box">
+            <div class="login-header">
+                <img src="../images/Logo Black Office.png" alt="BLACK OFFICE" class="login-logo">
+                <h1>Área Administrativa</h1>
+                <p>Faça login para acessar o painel</p>
+            </div>
+            <div class="login-form">
+                <div id="loginError" class="error-message"></div>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <div class="input-with-icon">
+                            <i class="fas fa-envelope"></i>
+                            <input type="email" id="email" name="email" placeholder="Seu email" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="input-with-icon">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="password" name="password" placeholder="Sua senha" required>
+                            <button type="button" class="toggle-password">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary login-btn">
+                        <i class="fas fa-sign-in-alt"></i> Entrar
+                    </button>
+                </form>
+            </div>
+            <div class="login-footer">
+                <p>&copy; 2025 BLACK OFFICE</p>
+                <a href="../index.html" class="back-to-site">
+                    <i class="fas fa-arrow-left"></i> Voltar para o site
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Script de autenticação embutido para evitar problemas de carregamento
+    document.addEventListener('DOMContentLoaded', function() {
+      // Elementos do formulário
+      const loginForm = document.getElementById('loginForm');
+      const emailInput = document.getElementById('email');
+      const passwordInput = document.getElementById('password');
+      const loginError = document.getElementById('loginError');
+      const togglePasswordBtn = document.querySelector('.toggle-password');
+      
+      // Mostrar/esconder senha
+      if (togglePasswordBtn) {
+        togglePasswordBtn.addEventListener('click', function() {
+          const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+          passwordInput.setAttribute('type', type);
+          
+          const icon = this.querySelector('i');
+          if (icon) {
+            icon.classList.toggle('fa-eye');
+            icon.classList.toggle('fa-eye-slash');
+          }
+        });
+      }
+      
+      // Processar login
+      if (loginForm) {
+        loginForm.addEventListener('submit', function(e) {
+          e.preventDefault();
+          
+          const email = emailInput.value.trim();
+          const password = passwordInput.value;
+          
+          if (!email || !password) {
+            showError('Por favor, preencha todos os campos.');
+            return;
+          }
+          
+          // Credenciais fixas para autenticação local
+          if (email === 'admin@blackoffice.com' && password === 'blackOffice007') {
+            // Login bem-sucedido
+            // Armazenar informações de autenticação localmente
+            localStorage.setItem('auth', JSON.stringify({
+              authenticated: true,
+              user: {
+                email: email,
+                name: 'Eliseu Gretter Gularte',
+                role: 'admin'
+              },
+              // Definir expiração para 24 horas
+              expires: new Date().getTime() + (24 * 60 * 60 * 1000)
+            }));
+            
+            // Redirecionar para o dashboard
+            window.location.href = 'dashboard.html';
+            return;
+          }
+          
+          // Se as credenciais não corresponderem
+          showError('Email ou senha incorretos. Por favor, tente novamente.');
+        });
+      }
+      
+      // Função para mostrar erro
+      function showError(message) {
+        if (loginError) {
+          loginError.textContent = message;
+          loginError.style.display = 'block';
+        } else {
+          alert(message);
+        }
+      }
+      
+      // Verificar se já existe uma sessão ativa
+      checkAuthStatus();
+      
+      // Função para verificar status de autenticação
+      function checkAuthStatus() {
+        const auth = JSON.parse(localStorage.getItem('auth') || '{"authenticated":false}');
+        
+        // Verificar se a autenticação expirou
+        if (auth.authenticated && auth.expires) {
+          if (new Date().getTime() > auth.expires) {
+            // Autenticação expirada
+            localStorage.removeItem('auth');
+            return;
+          }
+          
+          // Autenticação válida, redirecionar para o dashboard
+          window.location.href = 'dashboard.html';
+        }
+      }
+    });
+    </script>
+</body>
+</html>

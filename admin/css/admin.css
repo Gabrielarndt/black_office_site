@@ -1,0 +1,517 @@
+/* 
+   BLACK OFFICE - Estilos para área administrativa
+*/
+
+:root {
+    --admin-primary-color: #0a0a0a;
+    --admin-secondary-color: #1a1a1a;
+    --admin-accent-color: #0066ff;
+    --admin-text-color: #ffffff;
+    --admin-text-color-muted: #a0a0a0;
+    --admin-error-color: #ff3366;
+    --admin-success-color: #00cc66;
+    --admin-warning-color: #ffcc00;
+    --admin-border-radius: 10px;
+    --admin-box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    --admin-transition: all 0.3s ease;
+}
+
+.admin-body {
+    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.admin-body::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at center, rgba(0, 102, 255, 0.1) 0%, rgba(10, 10, 10, 0) 70%);
+    z-index: 0;
+}
+
+.admin-container {
+    width: 100%;
+    max-width: 1200px;
+    z-index: 1;
+}
+
+/* Login Page Styles */
+.login-box {
+    background: rgba(26, 26, 26, 0.8);
+    backdrop-filter: blur(10px);
+    border-radius: var(--admin-border-radius);
+    box-shadow: var(--admin-box-shadow);
+    overflow: hidden;
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+    position: relative;
+}
+
+.login-header {
+    padding: 30px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.login-logo {
+    max-width: 150px;
+    margin-bottom: 20px;
+}
+
+.login-header h1 {
+    font-size: 2rem;
+    margin-bottom: 10px;
+    color: var(--admin-text-color);
+}
+
+.login-header p {
+    color: var(--admin-text-color-muted);
+    font-size: 1rem;
+}
+
+.login-form {
+    padding: 30px;
+}
+
+.input-with-icon {
+    position: relative;
+}
+
+.input-with-icon i {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--admin-text-color-muted);
+}
+
+.input-with-icon input {
+    padding-left: 45px;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--admin-text-color-muted);
+    cursor: pointer;
+    transition: var(--admin-transition);
+}
+
+.toggle-password:hover {
+    color: var(--admin-accent-color);
+}
+
+.login-btn {
+    width: 100%;
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.error-message {
+    color: var(--admin-error-color);
+    font-size: 0.9rem;
+    margin-top: 15px;
+    text-align: center;
+    min-height: 20px;
+}
+
+.login-footer {
+    padding: 20px 30px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.login-footer p {
+    color: var(--admin-text-color-muted);
+    font-size: 0.8rem;
+}
+
+.back-to-site {
+    color: var(--admin-accent-color);
+    font-size: 0.9rem;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: var(--admin-transition);
+}
+
+.back-to-site:hover {
+    color: var(--admin-text-color);
+}
+
+/* Dashboard Styles */
+.admin-dashboard {
+    display: flex;
+    min-height: 100vh;
+}
+
+.admin-sidebar {
+    width: 250px;
+    background: var(--admin-secondary-color);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-header {
+    padding: 20px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-logo {
+    max-width: 120px;
+    margin-bottom: 10px;
+}
+
+.sidebar-nav {
+    padding: 20px 0;
+    flex: 1;
+}
+
+.nav-item {
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--admin-text-color-muted);
+    text-decoration: none;
+    transition: var(--admin-transition);
+    border-left: 3px solid transparent;
+}
+
+.nav-item:hover, .nav-item.active {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--admin-text-color);
+    border-left-color: var(--admin-accent-color);
+}
+
+.sidebar-footer {
+    padding: 15px 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.logout-btn {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--admin-text-color);
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: var(--admin-transition);
+}
+
+.logout-btn:hover {
+    background: var(--admin-error-color);
+}
+
+.admin-content {
+    flex: 1;
+    padding: 30px;
+    overflow-y: auto;
+}
+
+.content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.content-title h1 {
+    font-size: 2rem;
+    margin-bottom: 5px;
+}
+
+.content-title p {
+    color: var(--admin-text-color-muted);
+}
+
+.content-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.admin-card {
+    background: var(--admin-secondary-color);
+    border-radius: var(--admin-border-radius);
+    box-shadow: var(--admin-box-shadow);
+    margin-bottom: 30px;
+    overflow: hidden;
+}
+
+.card-header {
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+.card-footer {
+    padding: 15px 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Consultas Table */
+.consultas-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.consultas-table th, .consultas-table td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.consultas-table th {
+    color: var(--admin-text-color);
+    font-weight: 600;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.consultas-table tr:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.consultas-table td {
+    color: var(--admin-text-color-muted);
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.status-new {
+    background: var(--admin-accent-color);
+    color: var(--admin-text-color);
+}
+
+.status-in-progress {
+    background: var(--admin-warning-color);
+    color: #000;
+}
+
+.status-completed {
+    background: var(--admin-success-color);
+    color: var(--admin-text-color);
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    color: var(--admin-text-color-muted);
+    cursor: pointer;
+    transition: var(--admin-transition);
+    padding: 5px;
+}
+
+.action-btn:hover {
+    color: var(--admin-accent-color);
+}
+
+.action-btn.delete:hover {
+    color: var(--admin-error-color);
+}
+
+/* Consulta Detail Modal */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: var(--admin-transition);
+}
+
+.modal-backdrop.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-container {
+    width: 90%;
+    max-width: 700px;
+    background: var(--admin-secondary-color);
+    border-radius: var(--admin-border-radius);
+    box-shadow: var(--admin-box-shadow);
+    transform: translateY(-20px);
+    transition: var(--admin-transition);
+}
+
+.modal-backdrop.show .modal-container {
+    transform: translateY(0);
+}
+
+.modal-header {
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: var(--admin-text-color-muted);
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: var(--admin-transition);
+}
+
+.modal-close:hover {
+    color: var(--admin-error-color);
+}
+
+.modal-body {
+    padding: 20px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.consulta-detail {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.detail-group {
+    margin-bottom: 20px;
+}
+
+.detail-label {
+    font-size: 0.9rem;
+    color: var(--admin-text-color-muted);
+    margin-bottom: 5px;
+}
+
+.detail-value {
+    font-size: 1.1rem;
+    color: var(--admin-text-color);
+}
+
+.detail-full {
+    grid-column: 1 / -1;
+}
+
+.modal-footer {
+    padding: 15px 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+/* Responsive */
+@media screen and (max-width: 992px) {
+    .admin-dashboard {
+        flex-direction: column;
+    }
+    
+    .admin-sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .sidebar-nav {
+        display: flex;
+        padding: 10px;
+        overflow-x: auto;
+    }
+    
+    .nav-item {
+        border-left: none;
+        border-bottom: 3px solid transparent;
+    }
+    
+    .nav-item:hover, .nav-item.active {
+        border-left-color: transparent;
+        border-bottom-color: var(--admin-accent-color);
+    }
+    
+    .consulta-detail {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .content-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .consultas-table {
+        display: block;
+        overflow-x: auto;
+    }
+    
+    .modal-container {
+        width: 95%;
+    }
+}
+
+@media screen and (max-width: 576px) {
+    .login-footer {
+        flex-direction: column;
+        gap: 10px;
+        align-items: center;
+    }
+}
