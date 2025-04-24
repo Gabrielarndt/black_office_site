@@ -2,7 +2,7 @@
 
 document.addEventListener('DOMContentLoaded', function() {
     // URL base da API
-    const API_URL = 'http://localhost:3000/api';
+    const API_URL = 'https://black-office-site-1.onrender.com/api';
     
     // Selecionar o formulário de contato
     const contactForm = document.getElementById('consultaForm');
